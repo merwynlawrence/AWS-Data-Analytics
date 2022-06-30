@@ -1,0 +1,74 @@
+# In this we have used AWS EMR to answer the questions
+#AWS Elastic Map Reduce is a cluster platform that simplifies the running of big data frameworks.
+#It is a tool used for data processing and analysis in big data. 
+#It is based on Apache Hadoop and is used for data analysis, data warehousing, web indexing machine learning to name a few. 
+-----------------------------------------------------------------------
+
+Pre-processing:
+
+#We first create an S3 bucket in which we create a new Folder EMR which will contain the Hive Query. 
+#The AWS region is set as us-east-1.
+#A hive query was written in Data bricks HiveQL and downloaded on the local machine. 
+#This was then uploaded in the EMR folder. 
+
+---------------------------------------------------------------------
+#Task1. Top 5 journals with the highest frequency 
+
+INSERT OVERWRITE DIRECTORY 's3://merwynlawrence/EMR Output Folder/1'
+SELECT journal, count(*) as frequency
+FROM metadata
+WHERE journal != ""
+GROUP BY journal
+ORDER BY frequency DESC 
+LIMIT 5;
+
+-----------------------------------------------------------
+
+#Task2: Top 5 journal articles with highest abstract lengths 
+
+INSERT OVERWRITE DIRECTORY 's3://merwynlawrence/EMR Output Folder/2" 
+SELECT journal, round (avg(size (split(abstract, ' '))),2) as abstract_length
+FROM metadata
+WHERE abstract != ''
+GROUP BY journal
+ORDER BY abstract length DESC
+LIMIT 5;
+
+--------------------------------------------------------
+#Task3: Papers with the highest number of authors
+
+INSERT OVERWRITE DIRECTORY 's3://merwynlawrence/EMR Output Folder/3' 
+SELECT title, sum(size (split(authors, ";"))) as NoOfAuthors
+FROM metadata
+GROUP BY title
+ORDER BY NoOfAuthors DESC
+LIMIT 5:
+
+---------------------------------------------------------------
+#Task4: Top 5 most prolific authors 
+
+INSERT OVERWRITE DIRECTORY 's3://merwynlawrence/EMR Output Folder/4'
+FROM metadata
+SELECT trim(exp) AS Authors Name, count(*) as PaperContributions 
+GROUP BY exp
+LATERAL VIEW explode (split(authors, ;)) metadata as exp
+WHERE exp != ""
+ORDER BY PaperContributions DESC
+LIMIT 5;
+
+----------------------------------------------------------------------------
+#Task 6: Plot Number of papers per month
+
+CREATE VIEW IF NOT EXISTS monthsin2020 AS 
+SELECT trim(publish_time) AS months
+FROM metadata
+WHERE publish_time LIKE '202_-%'
+
+CREATE VIEW IF NOT EXISTS PaperPerMonth AS
+SELECT substr(months, 1, 7) AS year_months, count(*) as Count
+FROM monthsin2020
+GROUP BY months
+ORDER BY year_months;
+
+INSERT OVERWRITE DIRECTORY 's3://merwyn Lawrence/EMR Output Folder/6'
+SELECT * FROM PaperPerMonth;
