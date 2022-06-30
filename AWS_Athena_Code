@@ -1,3 +1,9 @@
+
+# In this we used the AWS services of AWS S3 and AWS Athena to analyse the CORD 19 Dataset
+
+
+
+#1.	Create an S3 bucket
 s3://merwynlawrence/assignment/
 
 
@@ -10,6 +16,7 @@ IAM Role Redshift
 arn:aws:iam::546845839406:role/myRedshiftRole
 
 ---------
+#	Create Tables
 create database metadataDB;
 CREATE EXTERNAL TABLE IF NOT EXISTS metadataDB.metadata
 (
@@ -43,6 +50,7 @@ WITH SERDEPROPERTIES ("skip.header.line.count"="1", "separatorChar" = '\073')
 LOCATION "s3://merwynlawrence/Scimagojr/"
 
 ----------------------------------------------------------------------
+### Top 5 journal length ###
 
 CREATE OR REPLACE VIEW Q1_5journals AS
 SELECT journal, count(*) as frequency
@@ -53,6 +61,7 @@ ORDER BY frequency DESC
 LIMIT 5;
 
 -------------------------------------------------------------------------
+###Top 5 papers with highest abstract lengths###
 
 CREATE OR REPLACE VIEW abstract_len AS
 SELECT journal, round(avg(length(abstract) - length(replace(abstract, ' ', '')) +1 ),1) AS avg_length
@@ -62,7 +71,7 @@ ORDER BY avg_length DESC
 LIMIT 5
 
 ---------------------------------------------------------------------------
-
+### Journals with highest number of authors ###
 CREATE OR REPLACE VIEW Q3_papers AS
 SELECT title,
 sum(length(authors) - length(replace(authors, ';',''))+1) as authors
@@ -72,6 +81,7 @@ ORDER By authors DESC
 LIMIT 5
 
 ----------------------------------------------------------------------------
+### Number of papers per month in 2020 ###
 
 CREATE OR REPLACE VIEW papers_month AS
 SELECT SUBSTR(publish_time, 1, 7) AS Year_Month,
@@ -80,3 +90,4 @@ FROM metadata
 WHERE publish_time LIKE '2020%' AND publish_time <> '2020'
 GROUP BY  SUBSTR(publish_time, 1,7)
 ORDER BY SUBSTR(publish_time, 1, 7) ASC
+
