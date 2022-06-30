@@ -1,0 +1,82 @@
+s3://merwynlawrence/assignment/
+
+
+https://merwynlawrence.s3.amazonaws.com/assignment/metadata_2020_07_01.csv
+
+
+arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+IAM Role Redshift
+arn:aws:iam::546845839406:role/myRedshiftRole
+
+---------
+create database metadataDB;
+CREATE EXTERNAL TABLE IF NOT EXISTS metadataDB.metadata
+(
+  `cord_uid` string,
+  `sha` string,
+  `source_x` string,
+  `title` string,
+  `doi` string,
+  `pmc_id` string,
+  `pubmed_id` string,
+  `license` string,
+  `abstract` string,
+  `publish_time` string,
+  `authors` string,
+  `journal` string,
+  `Microsoft_Academic_Paper_ID` string,
+  `WHO_#Covidence` string,
+  `arxiv_id` string,
+  `has_pdf_parse` string,
+  `full_text_file` string,
+  `url` string
+)
+
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES ("skip.header.line.count"="1", "separatorChar" = "," , "escapeChar" = "\"", "quoteChar" = "\"")
+LOCATION "s3://merwynlawrence/assignment/"
+-------------------------------------------------------------
+	
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES ("skip.header.line.count"="1", "separatorChar" = '\073')
+LOCATION "s3://merwynlawrence/Scimagojr/"
+
+----------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW Q1_5journals AS
+SELECT journal, count(*) as frequency
+FROM metadata
+WHERE journal IS NOT NULL
+GROUP BY journal
+ORDER BY frequency DESC
+LIMIT 5;
+
+-------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW abstract_len AS
+SELECT journal, round(avg(length(abstract) - length(replace(abstract, ' ', '')) +1 ),1) AS avg_length
+FROM metadata
+GROUP BY journal
+ORDER BY avg_length DESC
+LIMIT 5
+
+---------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW Q3_papers AS
+SELECT title,
+sum(length(authors) - length(replace(authors, ';',''))+1) as authors
+FROM metadata
+GROUP BY title
+ORDER By authors DESC
+LIMIT 5
+
+----------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW papers_month AS
+SELECT SUBSTR(publish_time, 1, 7) AS Year_Month,
+Count (*) as Count
+FROM metadata
+WHERE publish_time LIKE '2020%' AND publish_time <> '2020'
+GROUP BY  SUBSTR(publish_time, 1,7)
+ORDER BY SUBSTR(publish_time, 1, 7) ASC
